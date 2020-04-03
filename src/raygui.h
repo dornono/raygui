@@ -525,7 +525,7 @@ RAYGUIDEF bool GuiCheckIconPixel(int iconId, int x, int y);     // Check icon pi
 #endif
 
 #ifdef __cplusplus
-    #define RAYGUI_CLITERAL(name) name
+    #define RAYGUI_CLITERAL(name) (name)
 #else
     #define RAYGUI_CLITERAL(name) (name)
 #endif
@@ -1737,6 +1737,9 @@ bool GuiSpinner(Rectangle bounds, const char *text, int *value, int minValue, in
     // Draw text label if provided
     if (text != NULL) GuiDrawText(text, textBounds, (GuiGetStyle(SPINNER, TEXT_ALIGNMENT) == GUI_TEXT_ALIGN_RIGHT)? GUI_TEXT_ALIGN_LEFT : GUI_TEXT_ALIGN_RIGHT, Fade(GetColor(GuiGetStyle(LABEL, TEXT + (state*3))), guiAlpha));
     //--------------------------------------------------------------------
+
+    if (tempValue != *value)
+        pressed = true;
 
     *value = tempValue;
     return pressed;
@@ -3110,6 +3113,8 @@ void GuiLoadStyle(const char *fileName)
 
         fclose(rgsFile);
     }
+
+    guiStyleLoaded = true;
 }
 
 // Load style default over global style
@@ -3189,8 +3194,6 @@ void GuiLoadStyleDefault(void)
     GuiSetStyle(COLORPICKER, HUEBAR_PADDING, 0xa);
     GuiSetStyle(COLORPICKER, HUEBAR_SELECTOR_HEIGHT, 6);
     GuiSetStyle(COLORPICKER, HUEBAR_SELECTOR_OVERFLOW, 2);
-
-    guiFont = GetFontDefault();     // Initialize default font
 }
 
 // Get text with icon id prepended
