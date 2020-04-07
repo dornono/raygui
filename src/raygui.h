@@ -486,7 +486,7 @@ RAYGUIDEF GuiStyle LoadGuiStyle(const char *fileName);          // Load style fr
 RAYGUIDEF void UnloadGuiStyle(GuiStyle style);                  // Unload style
 */
 
-RAYGUIDEF const char *GuiIconText(int iconId, const char *text); // Get text with icon id prepended (if supported)
+RAYGUIDEF const char *GuiIconText(int iconId, const char *text, int maxLength); // Get text with icon id prepended (if supported)
 
 #if defined(RAYGUI_SUPPORT_ICONS)
 // Gui icons functionality
@@ -772,6 +772,7 @@ static void GuiDrawText(const char *text, Rectangle bounds, int alignment, Color
             position.x += (RICON_SIZE + ICON_TEXT_PADDING);
         }
 #endif
+
         DrawTextEx(guiFont, text, position, GuiGetStyle(DEFAULT, TEXT_SIZE), GuiGetStyle(DEFAULT, TEXT_SPACING), tint);
         //---------------------------------------------------------------------------------
     }
@@ -930,7 +931,7 @@ bool GuiWindowBox(Rectangle bounds, const char *title)
     GuiSetStyle(BUTTON, BORDER_WIDTH, 1);
     GuiSetStyle(BUTTON, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_CENTER);
 #if defined(RAYGUI_SUPPORT_ICONS)
-    clicked = GuiButton(closeButtonRec, GuiIconText(RICON_CROSS_SMALL, NULL));
+    clicked = GuiButton(closeButtonRec, GuiIconText(RICON_CROSS_SMALL, NULL, 0));
 #else
     clicked = GuiButton(closeButtonRec, "x");
 #endif
@@ -1564,6 +1565,7 @@ bool GuiDropdownBox(Rectangle bounds, const char *text, int *active, bool editMo
 // NOTE 2: Returns if KEY_ENTER pressed (useful for data validation)
 bool GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
 {
+	char cpyText[256];
     static int framesCounter = 0;           // Required for blinking cursor
 
     GuiControlState state = guiState;
@@ -1661,7 +1663,15 @@ bool GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode)
         DrawRectangle(bounds.x + GuiGetStyle(TEXTBOX, BORDER_WIDTH), bounds.y + GuiGetStyle(TEXTBOX, BORDER_WIDTH), bounds.width - 2*GuiGetStyle(TEXTBOX, BORDER_WIDTH), bounds.height - 2*GuiGetStyle(TEXTBOX, BORDER_WIDTH), Fade(GetColor(GuiGetStyle(TEXTBOX, BASE_COLOR_DISABLED)), guiAlpha));
     }
 
-    GuiDrawText(text, GetTextBounds(TEXTBOX, bounds), GuiGetStyle(TEXTBOX, TEXT_ALIGNMENT), Fade(GetColor(GuiGetStyle(TEXTBOX, TEXT + (state*3))), guiAlpha));
+    //Trim text to fit into bounds
+    snprintf(cpyText, sizeof(cpyText), "%s", text);
+    while (GetTextWidth(cpyText) > bounds.width)
+    {
+    	cpyText[strlen(cpyText) - 1] = '\0';
+    }
+
+    GuiDrawText(cpyText, GetTextBounds(TEXTBOX, bounds), GuiGetStyle(TEXTBOX, TEXT_ALIGNMENT),
+    			Fade(GetColor(GuiGetStyle(TEXTBOX, TEXT + (state*3))), guiAlpha));
     //--------------------------------------------------------------------
 
     return pressed;
@@ -1724,8 +1734,8 @@ bool GuiSpinner(Rectangle bounds, const char *text, int *value, int minValue, in
     GuiSetStyle(BUTTON, TEXT_ALIGNMENT, GUI_TEXT_ALIGN_CENTER);
 
 #if defined(RAYGUI_SUPPORT_ICONS)
-    if (GuiButton(leftButtonBound, GuiIconText(RICON_ARROW_LEFT_FILL, NULL))) tempValue--;
-    if (GuiButton(rightButtonBound, GuiIconText(RICON_ARROW_RIGHT_FILL, NULL))) tempValue++;
+    if (GuiButton(leftButtonBound, GuiIconText(RICON_ARROW_LEFT_FILL, NULL, 0))) tempValue--;
+    if (GuiButton(rightButtonBound, GuiIconText(RICON_ARROW_RIGHT_FILL, NULL, 0))) tempValue++;
 #else
     if (GuiButton(leftButtonBound, "<")) tempValue--;
     if (GuiButton(rightButtonBound, ">")) tempValue++;
@@ -3199,7 +3209,7 @@ void GuiLoadStyleDefault(void)
 // Get text with icon id prepended
 // NOTE: Useful to add icons by name id (enum) instead of
 // a number that can change between ricon versions
-const char *GuiIconText(int iconId, const char *text)
+const char *GuiIconText(int iconId, const char *text, int maxLength)
 {
 #if defined(RAYGUI_SUPPORT_ICONS)
     static char buffer[1024] = { 0 };
@@ -3209,7 +3219,7 @@ const char *GuiIconText(int iconId, const char *text)
 
     if (text != NULL)
     {
-        for (int i = 5; i < 1024; i++)
+        for (int i = 5; (i < 1024) && (i < (maxLength + 5)); i++)
         {
             buffer[i] = text[i - 5];
             if (text[i - 5] == '\0') break;
