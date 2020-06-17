@@ -2418,7 +2418,8 @@ int GuiListViewEx(Rectangle bounds, const char **text, int count, int *focus, in
     int visibleItems = bounds.height/(GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT) + GuiGetStyle(LISTVIEW, LIST_ITEMS_PADDING));
     if (visibleItems > count) visibleItems = count;
 
-    int startIndex = (scrollIndex == NULL)? 0 : *scrollIndex;
+    //int startIndex = (scrollIndex == NULL)? 0 : *scrollIndex;
+    int startIndex = active - visibleItems + 1;
     if ((startIndex < 0) || (startIndex > (count - visibleItems))) startIndex = 0;
     int endIndex = startIndex + visibleItems;
 
