@@ -447,7 +447,7 @@ RAYGUIDEF Rectangle GuiScrollPanel(Rectangle bounds, Rectangle content, Vector2 
 RAYGUIDEF void GuiLabel(Rectangle bounds, const char *text);                                            // Label control, shows text
 RAYGUIDEF bool GuiButton(Rectangle bounds, const char *text);                                           // Button control, returns true when clicked
 RAYGUIDEF bool GuiLabelButton(Rectangle bounds, const char *text);                                      // Label button control, show true when clicked
-RAYGUIDEF bool GuiImageButton(Rectangle bounds, const char *text, Texture2D texture);                   // Image button control, returns true when clicked
+RAYGUIDEF bool GuiImageButton(Rectangle bounds, const char *text, Texture2D texture, int color);                   // Image button control, returns true when clicked
 RAYGUIDEF bool GuiImageButtonEx(Rectangle bounds, const char *text, Texture2D texture, Rectangle texSource);    // Image button extended control, returns true when clicked
 RAYGUIDEF bool GuiToggle(Rectangle bounds, const char *text, bool active);                              // Toggle Button control, returns true when active
 RAYGUIDEF int GuiToggleGroup(Rectangle bounds, const char *text, int active);                           // Toggle Group control, returns active toggle index
@@ -455,6 +455,7 @@ RAYGUIDEF bool GuiCheckBox(Rectangle bounds, const char *text, bool checked);   
 RAYGUIDEF int GuiComboBox(Rectangle bounds, const char *text, int active);                              // Combo Box control, returns selected item index
 RAYGUIDEF bool GuiDropdownBox(Rectangle bounds, const char *text, int *active, bool editMode);          // Dropdown Box control, returns selected item
 RAYGUIDEF bool GuiSpinner(Rectangle bounds, const char *text, int *value, int minValue, int maxValue, bool editMode);     // Spinner control, returns selected value
+RAYGUIDEF bool GuiKnob(Rectangle bounds, const char *text, int *value, int minValue, int maxValue, bool editMode);     // Spinner control, returns selected value
 RAYGUIDEF bool GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, int maxValue, bool editMode);    // Value Box control, updates input text with numbers
 RAYGUIDEF bool GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode);                   // Text Box control, updates input text
 RAYGUIDEF bool GuiTextBoxMulti(Rectangle bounds, char *text, int textSize, bool editMode);              // Text Box control with multiple lines
@@ -1215,9 +1216,21 @@ bool GuiLabelButton(Rectangle bounds, const char *text)
 }
 
 // Image button control, returns true when clicked
-bool GuiImageButton(Rectangle bounds, const char *text, Texture2D texture)
-{
-    return GuiImageButtonEx(bounds, text, texture, RAYGUI_CLITERAL(Rectangle){ 0, 0, (float)texture.width, (float)texture.height });
+bool GuiImageButton(Rectangle bounds, const char *text, Texture2D texture, int color) {
+  bool rc;
+  int oldColor = GuiGetStyle(BUTTON, TEXT_COLOR_NORMAL);
+
+  if (color != 0)
+    GuiSetStyle(DEFAULT, TEXT_COLOR_NORMAL, color);
+
+  rc = GuiImageButtonEx(
+      bounds, text, texture, RAYGUI_CLITERAL(Rectangle) {
+        0, 0, (float)texture.width,
+        (float)texture.height
+      });
+
+  GuiSetStyle(DEFAULT, TEXT_COLOR_NORMAL, oldColor);
+  return rc;
 }
 
 // Image button control, returns true when clicked
@@ -1244,11 +1257,28 @@ bool GuiImageButtonEx(Rectangle bounds, const char *text, Texture2D texture, Rec
 
     // Draw control
     //--------------------------------------------------------------------
-    DrawRectangleLinesEx(bounds, GuiGetStyle(BUTTON, BORDER_WIDTH), Fade(GetColor(GuiGetStyle(BUTTON, BORDER + (state*3))), guiAlpha));
-    DrawRectangle(bounds.x + GuiGetStyle(BUTTON, BORDER_WIDTH), bounds.y + GuiGetStyle(BUTTON, BORDER_WIDTH), bounds.width - 2*GuiGetStyle(BUTTON, BORDER_WIDTH), bounds.height - 2*GuiGetStyle(BUTTON, BORDER_WIDTH), Fade(GetColor(GuiGetStyle(BUTTON, BASE + (state*3))), guiAlpha));
+    // DrawRectangleLinesEx(
+    //     bounds, GuiGetStyle(BUTTON, BORDER_WIDTH),
+    //     Fade(GetColor(GuiGetStyle(BUTTON, BORDER + (state * 3))), guiAlpha));
+    // DrawRectangle(
+    //     bounds.x + GuiGetStyle(BUTTON, BORDER_WIDTH),
+    //     bounds.y + GuiGetStyle(BUTTON, BORDER_WIDTH),
+    //     bounds.width - 2 * GuiGetStyle(BUTTON, BORDER_WIDTH),
+    //     bounds.height - 2 * GuiGetStyle(BUTTON, BORDER_WIDTH),
+    //     Fade(GetColor(GuiGetStyle(BUTTON, BASE + (state * 3))), guiAlpha));
 
-    if (text != NULL) GuiDrawText(text, GetTextBounds(BUTTON, bounds), GuiGetStyle(BUTTON, TEXT_ALIGNMENT), Fade(GetColor(GuiGetStyle(BUTTON, TEXT + (state*3))), guiAlpha));
-    if (texture.id > 0) DrawTextureRec(texture, texSource, RAYGUI_CLITERAL(Vector2){ bounds.x + bounds.width/2 - texSource.width/2, bounds.y + bounds.height/2 - texSource.height/2 }, Fade(GetColor(GuiGetStyle(BUTTON, TEXT + (state*3))), guiAlpha));
+    if (text != NULL)
+      GuiDrawText(
+          text, GetTextBounds(BUTTON, bounds),
+          GuiGetStyle(BUTTON, TEXT_ALIGNMENT),
+          Fade(GetColor(GuiGetStyle(BUTTON, TEXT + (state * 3))), guiAlpha));
+    if (texture.id > 0)
+      DrawTextureRec(
+          texture, texSource,
+          RAYGUI_CLITERAL(Vector2){
+              bounds.x + bounds.width / 2 - texSource.width / 2,
+              bounds.y + bounds.height / 2 - texSource.height / 2},
+          Fade(GetColor(GuiGetStyle(BUTTON, TEXT + (state * 3))), guiAlpha));
     //------------------------------------------------------------------
 
     return clicked;
