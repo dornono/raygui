@@ -455,7 +455,6 @@ RAYGUIDEF bool GuiCheckBox(Rectangle bounds, const char *text, bool checked);   
 RAYGUIDEF int GuiComboBox(Rectangle bounds, const char *text, int active);                              // Combo Box control, returns selected item index
 RAYGUIDEF bool GuiDropdownBox(Rectangle bounds, const char *text, int *active, bool editMode);          // Dropdown Box control, returns selected item
 RAYGUIDEF bool GuiSpinner(Rectangle bounds, const char *text, int *value, int minValue, int maxValue, bool editMode);     // Spinner control, returns selected value
-RAYGUIDEF bool GuiKnob(Rectangle bounds, const char *text, int *value, int minValue, int maxValue, bool editMode);     // Spinner control, returns selected value
 RAYGUIDEF bool GuiValueBox(Rectangle bounds, const char *text, int *value, int minValue, int maxValue, bool editMode);    // Value Box control, updates input text with numbers
 RAYGUIDEF bool GuiTextBox(Rectangle bounds, char *text, int textSize, bool editMode);                   // Text Box control, updates input text
 RAYGUIDEF bool GuiTextBoxMulti(Rectangle bounds, char *text, int textSize, bool editMode);              // Text Box control with multiple lines
@@ -469,7 +468,7 @@ RAYGUIDEF Vector2 GuiGrid(Rectangle bounds, float spacing, int subdivs);        
 
 // Advance controls set
 RAYGUIDEF int GuiListView(Rectangle bounds, const char *text, int *scrollIndex, int active);            // List View control, returns selected list item index
-RAYGUIDEF int GuiListViewEx(Rectangle bounds, const char **text, int count, int *focus, int *scrollIndex, int active);      // List View with extended parameters
+RAYGUIDEF int GuiListViewEx(Rectangle bounds, const char **text, int count, int *focus, int *scrollIndex, int active,bool dontUseScrollbar);      // List View with extended parameters
 RAYGUIDEF int GuiMessageBox(Rectangle bounds, const char *title, const char *message, const char *buttons);                 // Message Box control, displays a message
 RAYGUIDEF int GuiTextInputBox(Rectangle bounds, const char *title, const char *message, const char *buttons, char *text);   // Text Input Box control, ask for text
 RAYGUIDEF Color GuiColorPicker(Rectangle bounds, Color color);                                          // Color Picker control (multiple color controls)
@@ -1276,8 +1275,8 @@ bool GuiImageButtonEx(Rectangle bounds, const char *text, Texture2D texture, Rec
       DrawTextureRec(
           texture, texSource,
           RAYGUI_CLITERAL(Vector2){
-              bounds.x + bounds.width / 2 - texSource.width / 2,
-              bounds.y + bounds.height / 2 - texSource.height / 2},
+              bounds.x + bounds.width / 2 - texture.width / 2,
+              bounds.y + bounds.height / 2 - texture.height / 2},
           Fade(GetColor(GuiGetStyle(BUTTON, TEXT + (state * 3))), guiAlpha));
     //------------------------------------------------------------------
 
@@ -2422,11 +2421,11 @@ int GuiListView(Rectangle bounds, const char *text, int *scrollIndex, int active
 
     if (text != NULL) items = GuiTextSplit(text, &itemsCount, NULL);
 
-    return GuiListViewEx(bounds, items, itemsCount, NULL, scrollIndex, active);
+    return GuiListViewEx(bounds, items, itemsCount, NULL, scrollIndex, active, false);
 }
 
 // List View control with extended parameters
-int GuiListViewEx(Rectangle bounds, const char **text, int count, int *focus, int *scrollIndex, int active)
+int GuiListViewEx(Rectangle bounds, const char **text, int count, int *focus, int *scrollIndex, int active, bool dontUseScrollbar)
 {
     GuiControlState state = guiState;
     int itemFocused = (focus == NULL)? -1 : *focus;
@@ -2434,8 +2433,10 @@ int GuiListViewEx(Rectangle bounds, const char **text, int count, int *focus, in
 
     // Check if we need a scroll bar
     bool useScrollBar = false;
+    if (!dontUseScrollbar)
+    {
     if ((GuiGetStyle(LISTVIEW, LIST_ITEMS_HEIGHT) + GuiGetStyle(LISTVIEW, LIST_ITEMS_PADDING))*count > bounds.height) useScrollBar = true;
-
+    }
     // Define base item rectangle [0]
     Rectangle itemBounds = { 0 };
     itemBounds.x = bounds.x + GuiGetStyle(LISTVIEW, LIST_ITEMS_PADDING);
